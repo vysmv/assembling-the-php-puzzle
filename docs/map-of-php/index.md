@@ -86,7 +86,7 @@ SAPI — это посредник между средой и ядром.
  ... 
  ```
 
- ###### Дополнительная информация: [Детали работы популярных SAPI](./details-of-the-operation-of-popular-SAPIs.md).
+**Дополнительная информация: [Детали работы популярных SAPI](./details-of-the-operation-of-popular-SAPIs.md)**.
 
  ##### 2. Ядро (Zend Engine)
 
