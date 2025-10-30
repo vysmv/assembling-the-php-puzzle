@@ -562,7 +562,7 @@ ls
 Создадим скрипт на bash
 
 ```bash
-sudo nano bash_script
+sudo nano script.bash
 ```
 
 ```bash                                                  
@@ -583,7 +583,7 @@ env
 ```
 Сделаем его исполняемым, для более удобного запуска
 ```bash
-sudo chmod 775 ./bash_script
+sudo chmod 775 ./script.bash
 ```
 
 **Пояснение:**
@@ -594,28 +594,53 @@ sudo chmod 775 ./bash_script
 
 Иными словами когда мы вызываем этот скрипт как: 
 ```bash
-bash ./bash_script
+bash ./script.bash
 #или
-./bash_script # в этом случае оболочка поймет какой нужен интерпретатор через шебанг #!/usr/bin/env bash
+./script.bash # в этом случае оболочка поймет какой нужен интерпретатор через шебанг #!/usr/bin/env bash
 ```
 
-Мы можем либо передать содержание stdin сразу через  pipe или файл (./bash_script < file_name) 
+Мы можем либо передать содержание stdin сразу через  pipe или файл (./script.bash < file_name) 
 либо не передавать дынные и тогда потенциальным источником stdin станет терминал\клавиатура.
 
-Когда веб сервер будет вызывать php-cgi то он сразу указывает источником данных для stdin специальный сокет в который пишет тело http запроса. 
+А например когда веб сервер будет вызывать php-cgi то он сразу указывает источником данных для stdin специальный сокет в который пишет тело http запроса. 
 
 - `env` — выводит переменные окружения
 
-
 Так вот мы можем запустить скрипт передав данные во все каналы
 ```bash
-echo "content for stdin" | MYVAR=mydata ./bash_script param1 param2 param3
+echo "content for stdin" | MYVAR=mydata ./script.bash param1 param2 param3
 ```
 
 Точно так, по аналогии мы можем запустить в терминале скрипт на PHP.
+```bash
+sudo micro script.php
+```
 
+```php
+#!/usr/bin/env php
+<?php
 
+echo "=== Аргументы скрипта ===\n";
+echo "Количество аргументов: " . $argc . "\n";
+echo "Аргументы: " . implode(' ', $argv) . "\n\n";
 
+echo "=== Поток ввода (stdin) ===\n";
+echo file_get_contents('php://stdin') . "\n";
+
+echo "=== Переменные окружения ===\n";
+print_r($_SERVER); // Или $_SERVER
+```
+
+Сделаем его исполняемым, для более удобного запуска
+```bash
+sudo chmod 775 ./script.php
+```
+
+```php
+echo "content for stdin" | MYVAR=mydata ./script.php param1 param2 param3
+```
+
+И мы видем что скрипт запускается 
 
 
 
