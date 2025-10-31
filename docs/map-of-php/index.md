@@ -443,16 +443,16 @@ Extensions — это расширения, которые могут собир
 
 На этом мы закончим с теоретической частью. 
 
-А теперь перейдем к практике в которой мы закрепим весь пройденный материал.
+И перейдем к практике в которой мы закрепим весь пройденный материал.
 
-Для теста я подниму на VirtualBox пустой Debian 13 и буду проводить всю демонстрацию в терминале. 
-Единственное это я добавлю - пробросы портов в настройках сети, чтобы с хостовой ОС делать ssh и http запросы в гостевую ОС. 
+Я подниму на VirtualBox Debian 13 и буду проводить всю демонстрацию в терминале. 
+Единственное что я сделал за кадром - это пробросы портов в настройках сети, чтобы с хостовой ОС делать ssh и http запросы в гостевую ОС. 
 
 <p align="center">
   <img src="img/1.png" alt="проброс портов">
 </p>
 
-Для начала я добавлю нового пользователя в группу sudo:
+И добавил основного пользователя в группу sudo:
 
 ```bash
 su -
@@ -640,7 +640,107 @@ sudo chmod 775 ./script.php
 echo "content for stdin" | MYVAR=mydata ./script.php param1 param2 param3
 ```
 
-И мы видем что скрипт запускается 
+И мы видем что скрипт запускается интерпретатором php с CLI SAPI по тем же правилам, что скрипт на bash.
+
+Так вот тут сразу можно посмотреть наглядно на суперглобальные массивы доступные при использовании  CLI SAPI.
+А также на средста по работе с вводом и выводом.
+То есть на условный CLI профиль. 
+
+```bash
+#!/usr/bin/env php
+<?php
+
+echo "=== Аргументы скрипта ===\n";
+echo "Количество аргументов: " . $argc . "\n";
+echo "Аргументы: " . implode(' ', $argv) . "\n\n";
+
+echo "=== Переменные окружения ===\n";
+print_r($_SERVER);
+echo "======\n\n";
+
+echo "===ENV===\n";
+print_r($_ENV);
+echo "======\n\n";
+
+echo "===REQUEST===\n";
+print_r($_REQUEST);
+echo "======\n\n";
+
+echo "===GET===\n";
+print_r($_GET);
+echo "======\n\n";
+
+echo "===POST===\n";
+print_r($_POST);
+echo "======\n\n";
+
+echo "===COOKIE===\n";
+if(isset($_COOKIE))
+print_r($_COOKIE);
+echo "======\n\n";
+
+echo "===FILES===\n";
+print_r($_FILES);
+echo "======\n\n";
+
+echo "===GLOBALS===\n";
+print_r($GLOBALS);
+echo "======\n\n";
+
+echo "===SESSION===\n";
+if(isset($_SESSION)){
+	print_r($_SESSION);
+} else {
+	echo "empty" . "\n";
+}
+echo "======\n\n";
+
+
+
+echo STDIN . "\n";
+echo STDOUT . "\n"; 
+echo STDERR . "\n\n";
+
+echo "=== Поток ввода (stdin) ===\n";
+echo file_get_contents("php://stdin") . "\n"; // Формально можно читать и прямо из /dev/stdin но это будет работать только в UNIX подобных системах. 
+
+echo "=== Поток вывода (stdout) ===\n";
+file_put_contents("php://stdout", "content output" . "\n");
+```
+У вас может возникнуть вопрос про псевдо-потоки и дискрипторы, когда что применять? 
+если:
+- нужно работать как с файлами → php://stdin
+- нужно работать как с ресурсами (по файловому дискриптору. например fwrite(STDERR, "Error\n");) → STDIN
+
+Ну а теперь можно вернуться к CGI.
+Как я уже упоминал, разработчики CGI решили использовать принцип запуска терминальных команд. 
+С небольшим отличием, в том что в CGI нет работы с параметрами командной строки. 
+В протоколе CGI просто парсится стартовая строка и заголовки в переменные окружения а тело запроса в stdin.  
+
+Для того, чтобы реализовать работу по протоколу CGI нужно
+
+sudo apt install php-cgi
+
+Добавляем в конфиг /etc/apache2/sites-available/000-default.conf 
+ScriptAlias /cgi-bin/ /var/www/cgi-bin/ 
+AddHandler php-file .php
+Action php-file /cgi-bin/php-cgi-runner
+
+Активируем модуль cgi 
+sudo a2enmod actions
+sudo a2enmod cgi
+sudo systemctl restart apache2
+
+создать исполняемый файл  php-cgi-runner в /var/www/cgi-bin. 
+#!/bin/bash
+/usr/bin/php-cgi
+
+или просто
+#!/usr/bin/env php-cgi
+
+Делаем его исполняемым
+sudo chmod 775 ./php-cgi-runner
+
 
 
 
